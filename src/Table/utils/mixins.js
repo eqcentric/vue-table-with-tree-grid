@@ -22,12 +22,20 @@ export default {
         (!table.showIndex && columnIndex === 0)
       );
     },
-    isSelectionCell(table, columnIndex) {
+    isFirstHeadCell(table, columnIndex) {
       return table.selectionType && (
         (table.showIndex && table.expandType && columnIndex === 2) ||
         (!table.showIndex && table.expandType && columnIndex === 1) ||
         (table.showIndex && !table.expandType && columnIndex === 1) ||
         (!table.showIndex && !table.expandType && columnIndex === 0)
+      );
+    },
+    isSelectionCell(table, columnIndex) {
+      return table.selectionType && (
+          (table.showIndex && table.expandType && columnIndex === 2) ||
+          (!table.showIndex && table.expandType && columnIndex === 1) ||
+          (table.showIndex && !table.expandType && columnIndex === 1) ||
+          (!table.showIndex && !table.expandType && columnIndex === 0)
       );
     },
   },

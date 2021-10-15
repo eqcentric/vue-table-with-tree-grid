@@ -2,8 +2,9 @@
   <label :class="`${prefixCls}-wrapper`">
     <span :class="checkboxClass">
       <span
-        :class="`${prefixCls}__inner`"
+        :class="`${prefixCls}__inner mr-15`"
         @click="toggle"></span>
+        <slot/>
     </span>
   </label>
 </template>
@@ -37,7 +38,7 @@
           {
             [`${this.prefixCls}--disabled`]: this.disabled,
             [`${this.prefixCls}--checked`]: this.value,
-            [`${this.prefixCls}--indeterminate`]: this.indeterminate,
+            // [`${this.prefixCls}--indeterminate`]: this.indeterminate,
           },
         ];
       },

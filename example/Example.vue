@@ -3,7 +3,7 @@
     <ul class="switch-list">
       <li class="switch-item" v-for="item in propList">
         <span>{{ item.name }}: </span>
-        <zk-switch v-model="props[item.name]"></zk-switch>
+        <zk-switch v-model="props[item.name]" disabled></zk-switch>
       </li>
     </ul>
     <zk-table
@@ -46,15 +46,15 @@
       return {
         props: {
           stripe: false,
-          border: false,
+          border: true,
           showHeader: true,
           showSummary: false,
-          showRowHover: true,
+          showRowHover: false,
           showIndex: false,
           treeType: true,
-          isFold: true,
+          isFold: false,
           expandType: false,
-          selectionType: false,
+          selectionType: true,
         },
         data: [
           {
@@ -233,6 +233,7 @@
 </script>
 
 <style scoped lang="less">
+
   * {
     margin: 0;
     padding: 0;

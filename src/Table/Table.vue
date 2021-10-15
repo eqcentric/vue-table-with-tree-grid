@@ -1,3 +1,4 @@
+
 <template lang="html">
   <div
     v-if="columns.length > 0"
@@ -70,7 +71,7 @@
 
   function initialState(table) {
     return {
-      bodyHeight: 'auto',
+      bodyHeight: table.maxHeight ? table.maxHeight : 'auto',
       firstProp: table.columns[0].prop,
       bodyData: getBodyData(table.data, table.treeType, table.childrenProp, table.isFold),
     };
@@ -82,11 +83,6 @@
     const otherColumns = [];
     const columns = table.columns.concat();
     if (table.expandType) {
-      columns.unshift({
-        width: '50',
-      });
-    }
-    if (table.selectionType) {
       columns.unshift({
         width: '50',
       });
@@ -188,7 +184,7 @@
       },
       emptyText: {
         type: String,
-        default: '暂无数据',
+        default: '',
       },
       showHeader: {
         type: Boolean,
@@ -200,7 +196,7 @@
       },
       indexText: {
         type: String,
-        default: '序号',
+        default: '',
       },
       showSummary: {
         type: Boolean,
@@ -208,7 +204,7 @@
       },
       sumText: {
         type: String,
-        default: '合计',
+        default: '',
       },
       summaryMethod: Function,
       showRowHover: {
@@ -220,6 +216,10 @@
       cellClassName: [String, Function],
       rowStyle: [Object, Function],
       cellStyle: [Object, Function],
+      busy: {
+        type: Boolean,
+        default: false,
+      },
     },
     data() {
       return {
@@ -232,7 +232,7 @@
     computed: {
       bodyWrapperStyle() {
         return {
-          height: this.bodyHeight,
+          maxHeight: this.bodyHeight,
         };
       },
       tableClass() {
@@ -271,11 +271,10 @@
           const { clientWidth, clientHeight } = this.$el;
           this.computedWidth = clientWidth + 2;
           this.computedHeight = clientHeight + 2;
-
-          const maxHeight = parseInt(this.maxHeight, 10);
-          if (this.maxHeight !== 'auto' && this.computedHeight > maxHeight) {
-            this.bodyHeight = `${maxHeight - 83}px`;
-          }
+          // const maxHeight = parseInt(this.maxHeight, 10);
+          //   if (this.maxHeight !== 'auto' && this.computedHeight > maxHeight) {
+          //   this.bodyHeight = `${maxHeight}px`;
+          // }
           this.tableColumns = initialColumns(this, clientWidth);
         });
       },

@@ -1,7 +1,7 @@
+/* eslint-disable */
 import Checkbox from '../Checkbox/Checkbox'; // eslint-disable-line
 import { mixins } from './utils';
 
-/* eslint-disable no-underscore-dangle */
 export default {
   name: 'zk-table__body',
   mixins: [mixins],
@@ -57,6 +57,7 @@ export default {
       if (certainType.checkbox) {
         const { isChecked } = others;
         this.toggleStatus('Checked', row, rowIndex, isChecked);
+
         if (row._childrenLen > 0) {
           const childrenIndex = this.getChildrenIndex(row._level, rowIndex, false);
           for (let i = 0; i < childrenIndex.length; i++) {
@@ -140,6 +141,16 @@ export default {
         }
         if (certainType.row) {
           classList.push(`${this.prefixCls}__body-row`);
+          if(row._isChecked){
+              classList.push(`${this.prefixCls}__body-row-selected`);
+          }
+
+          if((row._level - 1) === 0){
+              classList.push(`${this.prefixCls}__body-row-root`);
+          }
+          if((row._level - 1) > 0){
+              classList.push(`${this.prefixCls}__body-row-child`);
+          }
           if (this.table.stripe && rowIndex % 2 !== 0) {
             classList.push(`${this.prefixCls}--stripe-row`);
           }
@@ -169,6 +180,23 @@ export default {
       }
       return classList.join(' ');
     }
+    function renderVerticalLineLevel(level, isParent = false){
+        let data = [];
+        const length = isParent ? level - 1 : level - 2
+        for(let i = 1; i <= length; i++){
+           data.push({
+               index: i,
+               type: isParent && i === length ? 'half' : ''
+           })
+        }
+        const result =  data.map((value) => {
+            if(value.type == 'half'){
+                return <span class={`vertical-line level-${value.index} half`}></span>;
+            }
+            return <span class={`vertical-line level-${value.index}`}></span>;
+        })
+        return result;
+    }
 
     // 根据type渲染单元格Cell
     function renderCell(row, rowIndex, column, columnIndex) {
@@ -176,8 +204,22 @@ export default {
       if (this.isExpandCell(this.table, columnIndex)) {
         return <i class='zk-icon zk-icon-angle-right'></i>;
       }
-      // SelectionType's Checkbox
-      if (this.isSelectionCell(this.table, columnIndex)) {
+      if (this.table.treeType && this.table.firstProp === column.prop && !this.table.selectionType) {
+        return <span
+            class={ `${this.prefixCls}--level-${row._level}-cell` }
+            style={{
+              marginLeft: `${(row._level - 1) * 24}px`,
+              paddingLeft: row._childrenLen === 0 ? '26px' : '',
+            }}>
+            { row._childrenLen > 0 &&
+            <i
+                class={ `${this.prefixCls}--tree-icon zk-icon zk-icon-${row._isFold ? 'plus' : 'minus'}-square-o`}
+                on-click={ $event => this.handleEvent($event, 'icon', { row, rowIndex, column, columnIndex }, { isFold: row._isFold }) }></i>
+            }
+          { row[column.prop] ? row[column.prop] : '' }
+        </span>;
+      }
+      if (this.table.treeType && this.table.firstProp === column.prop && this.isSelectionCell(this.table, columnIndex)) {
         let allCheck;
         let childrenIndex;
         const hasChildren = row._childrenLen > 0;
@@ -185,44 +227,84 @@ export default {
           childrenIndex = this.getChildrenIndex(row._level, rowIndex, false);
           allCheck = true;
           for (let i = 0; i < childrenIndex.length; i++) {
-            if (!this.table.bodyData[childrenIndex[i]]._isChecked) {
-              allCheck = false;
-              break;
-            }
+              if (!this.table.bodyData[childrenIndex[i]]._isChecked) {
+                  allCheck = false;
+                  break;
+              }
+          }
+          if (allCheck !== row._isChecked) {
+            this.table.bodyData = this.table.bodyData.map((rowItem, index) => {
+              if (index === rowIndex) {
+                return {
+                  ...rowItem,
+                  _isChecked: allCheck,
+                };
+              }
+              return rowItem;
+            });
+            this.table.$emit('checkbox-click', null, null, null, null);
           }
         } else {
-          allCheck = row._isChecked;
+            allCheck = row._isChecked;
         }
         let indeterminate = false;
         if (hasChildren && !allCheck) {
-          for (let i = 0; i < childrenIndex.length; i++) {
-            if (this.table.bodyData[childrenIndex[i]]._isChecked) {
-              indeterminate = true;
-              break;
+            for (let i = 0; i < childrenIndex.length; i++) {
+                if (this.table.bodyData[childrenIndex[i]]._isChecked) {
+                    indeterminate = true;
+                    break;
+                }
             }
-          }
         }
-        return <Checkbox
-          indeterminate={ indeterminate }
-          value={ allCheck }
-          onOn-change={ isChecked => this.handleEvent(null, 'checkbox', { row, rowIndex, column, columnIndex }, { isChecked }) }>
-          </Checkbox>;
-      }
-      // Tree's firstProp
-      if (this.table.treeType && this.table.firstProp === column.prop) {
-        return <span
-          class={ `${this.prefixCls}--level-${row._level}-cell` }
-          style={{
-            marginLeft: `${(row._level - 1) * 24}px`,
-            paddingLeft: row._childrenLen === 0 ? '20px' : '',
-          }}>
-            { row._childrenLen > 0 &&
-              <i
-                class={ `${this.prefixCls}--tree-icon zk-icon zk-icon-${row._isFold ? 'plus' : 'minus'}-square-o`}
-                on-click={ $event => this.handleEvent($event, 'icon', { row, rowIndex, column, columnIndex }, { isFold: row._isFold }) }></i>
+
+        let endGroupRow = false;
+        // if((this.table && this.table.bodyData && row.children.length === 0
+        //   && (rowIndex + 1) < this.table.bodyData.length && this.table.bodyData[rowIndex + 1]
+        //   && this.table.bodyData[rowIndex + 1].parent_key === null) || rowIndex === (this.table.bodyData.length - 1)){
+        //   endGroupRow = true;
+        // }
+        if((this.table.bodyData[rowIndex + 1] !== undefined && this.table.bodyData[rowIndex + 1].parent_key !== undefined) || rowIndex === (this.table.bodyData.length - 1)){
+          console.log('this.table.bodyData[rowIndex + 1]',this.table.bodyData[rowIndex + 1], rowIndex === (this.table.bodyData.length - 1));
+          endGroupRow = true;
+        }
+
+        let endOfChild = false;
+        if(rowIndex + 1 < this.table.bodyData.length){
+            const nextRow = this.table.bodyData[rowIndex + 1];
+            if(row._level > nextRow._level){
+                endOfChild = true;
             }
-            { row[column.prop] ? row[column.prop] : '' }
-        </span>;
+        }
+
+          return <div>
+           <span
+               class={ `${this.prefixCls}--level-${row._level}-cell ${this.prefixCls}_checkbox-group` }
+               style={{
+                 marginLeft: `${(row._level - 1) * 16}px`,
+               }}>
+                <span
+                    class={ `${this.prefixCls}--tree-icon zk-icon zk-icon-${row._isFold ? 'plus' : 'minus'}-square-o  ${row._childrenLen === 0 ? 'zk-invisible-icon' : 'has-children'} ${(row._level - 1) > 0 ? 'has-parent': ''} ${endGroupRow ? 'end-row': ''} ${endOfChild ? 'end-of-child': ''}`}
+                    on-click={ $event => this.handleEvent($event, 'icon', { row, rowIndex, column, columnIndex }, { isFold: row._isFold }) }>
+                    {
+                        row._level === 1 && row._childrenLen > 0
+                            ? <span class={'vertical-line root half'}/>
+                            : (
+                                row._level === 1 && row._childrenLen === 0
+                                    ? ''
+                                    : <span class={'vertical-line root'}/>
+                            )
+                    }
+                    {renderVerticalLineLevel(row._level, row._childrenLen > 0)}
+                </span>
+               <Checkbox
+                   indeterminate={ indeterminate }
+                   value={ allCheck }
+                   id={rowIndex}
+                   onOn-change={ isChecked => this.handleEvent(null, 'checkbox', { row, rowIndex, column, columnIndex }, { isChecked }) }>
+                   { row[column.prop] ? row[column.prop] : '' }
+               </Checkbox>
+          </span>
+          </div>;
       }
       // TreeType children's index
       if (this.table.showIndex && this.table.treeType && column.prop === '_normalIndex' && row._level > 1) {
@@ -269,7 +351,7 @@ export default {
                         on-contextmenu={ $event => this.handleEvent($event, 'cell', { row, rowIndex, column, columnIndex }) }
                         on-mouseenter={ $event => this.handleEvent($event, 'cell', { row, rowIndex, column, columnIndex }) }
                         on-mouseleave={ $event => this.handleEvent($event, 'cell', { row, rowIndex, column, columnIndex }) }>
-                        <div class={ getClassName.call(this, 'inner', row, rowIndex, column, columnIndex) }>
+                        <div class={ getClassName.call(this, 'inner', row, rowIndex, column, columnIndex) } title={ row[column.prop]}>
                           { renderCell.call(this, row, rowIndex, column, columnIndex) }
                         </div>
                       </td>)
@@ -289,13 +371,12 @@ export default {
                    </td>
                 </tr>,
               ])
-            : <tr
-                class={ `${this.prefixCls}--empty-row` }>
-                <td
-                  class={ `${this.prefixCls}__body-cell ${this.prefixCls}--empty-content` }
-                  colspan={ this.table.tableColumns.length }>
-                  { this.table.emptyText }
-                </td>
+            : <tr className={`${this.prefixCls}--empty-row`}>
+              <td
+                  className={`${this.prefixCls}__body-cell ${this.prefixCls}--empty-content`}
+                  colSpan={this.table.tableColumns.length}>
+                  { this.table.busy && this.table.$scopedSlots['table-busy'] ? this.table.$scopedSlots['table-busy']() : (this.table.$scopedSlots['table-empty'] ? this.table.$scopedSlots['table-empty']() : this.table.emptyText) }
+              </td>
               </tr>
           }
         </tbody>
@@ -303,3 +384,4 @@ export default {
     );
   },
 };
+/* eslint-disable */

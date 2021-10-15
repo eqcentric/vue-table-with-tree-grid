@@ -21,6 +21,7 @@ export default {
         ...row,
         _isChecked: checked,
       }));
+      this.table.$emit('checkbox-click', null, null, null, null);
     },
   },
   render() {
@@ -48,16 +49,21 @@ export default {
 
     // 根据type渲染单元格Label
     function renderLabel(column, columnIndex) {
-      if (this.isSelectionCell(this.table, columnIndex)) {
-        const allCheck = this.table.bodyData.every(row => row._isChecked);
+      if (this.isFirstHeadCell(this.table, columnIndex)) {
+        const allCheck = this.table.bodyData.length > 0
+          && this.table.bodyData.every(row => row._isChecked);
         const indeterminate = !allCheck && this.table.bodyData.some(row => row._isChecked);
-        return <Checkbox
-          indeterminate={ indeterminate }
-          value={ allCheck }
-          onOn-change={ checked => this.toggleAllChecked(checked) }
-          ></Checkbox>;
+        return <div className={`${this.prefixCls}_checkbox-group`}>
+            <Checkbox
+                indeterminate={ indeterminate }
+                value={ allCheck }
+                id={0}
+                onOn-change={ checked => this.toggleAllChecked(checked) }>
+                {column.label ? column.label.toUpperCase() : '' }
+            </Checkbox>
+        </div>;
       }
-      return column.label ? column.label : '';
+      return column.label ? column.label.toUpperCase() : '';
     }
 
     // Template
