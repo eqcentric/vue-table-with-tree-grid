@@ -10,11 +10,11 @@
     "vue-jsx"
   ],
   "author": "GaoQi <taki.gaoqi@outlook.com>",
-  "homepage": "https://github.com/MisterTaki/vue-table-with-tree-gird",
-  "bugs": "https://github.com/MisterTaki/vue-table-with-tree-gird/issues",
+  "homepage": "https://github.com/eqcentric/vue-table-with-tree-grid",
+  "bugs": "https://github.com/eqcentric/vue-table-with-tree-grid/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/MisterTaki/vue-table-with-tree-gird"
+    "url": "https://github.com/eqcentric/vue-table-with-tree-grid"
   },
   "main": "lib/vue-table-with-tree-grid.js",
   "files": [
